@@ -1,0 +1,40 @@
+import tensorflow as tf
+
+# Define the model architecture
+model = tf.keras.Sequential([
+    tf.keras.layers.Embedding(input_dim=vocab_size, output_dim=embedding_dim),
+    tf.keras.layers.LSTM(rnn_units, return_sequences=True),
+    tf.keras.layers.Dense(vocab_size)
+])
+
+# Compile the model
+model.compile(optimizer='adam', loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True))
+
+# Define the training loop
+EPOCHS = 10
+mean_loss = tf.metrics.Mean()
+for epoch in range(EPOCHS):
+    start = time.time()
+    mean_loss.reset_states()
+    for (batch_n, (inp, target)) in enumerate(dataset):
+        logs = model.train_step([inp, target])
+        mean_loss.update_state(logs['loss'])
+        if batch_n % 50 == 0:
+            template = f"Epoch {epoch+1} Batch {batch_n} Loss {logs['loss']:.4f}"
+            print(template)
+    print(f"Epoch {epoch+1} Loss {mean_loss.result().numpy():.4f}")
+print("Training time: {:.2f}s".format(time.time() - start))
+
+# Generate new text
+start = tf.constant(['ROMEO:', 'ROMEO:', 'ROMEO:', 'ROMEO:', 'ROMEO:'])
+result = [start]
+states = None
+for n in range(500):
+    next_char_predictions = model(result[-1], training=False)
+    probabilities = tf.nn.softmax(next_char_predictions)
+    next_char = tf.random.categorical(probabilities, num_samples=1, temperature=0.5)[0]
+    result.append(next_char)
+
+# Convert the generated text back into human-readable form
+generated_text = tf.strings.reduce_join(chars_from_ids(result), axis=-1).numpy().decode('utf-8')
+print(generated_text)
