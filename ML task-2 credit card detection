@@ -1,0 +1,53 @@
+# Import necessary libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+
+# Load the dataset
+df = pd.read_csv('credit_card_transactions.csv')
+
+# Separate the features and target variable
+X = df.drop('fraud', axis=1)
+y = df['fraud']
+
+# Split the dataset into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Scale the features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Build the logistic regression model
+lr_model = LogisticRegression()
+lr_model.fit(X_train, y_train)
+
+# Build the decision tree model
+dt_model = DecisionTreeClassifier()
+dt_model.fit(X_train, y_train)
+
+# Build the random forest model
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+
+# Make predictions on the testing set
+y_pred_lr = lr_model.predict(X_test)
+y_pred_dt = dt_model.predict(X_test)
+y_pred_rf = rf_model.predict(X_test)
+
+# Evaluate the models
+print("Logistic Regression:")
+print(classification_report(y_test, y_pred_lr))
+print(confusion_matrix(y_test, y_pred_lr))
+
+print("\nDecision Tree:")
+print(classification_report(y_test, y_pred_dt))
+print(confusion_matrix(y_test, y_pred_dt))
+
+print("\nRandom Forest:")
+print(classification_report(y_test, y_pred_rf))
+print(confusion_matrix(y_test, y_pred_rf))
